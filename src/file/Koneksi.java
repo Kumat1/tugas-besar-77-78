@@ -1,7 +1,12 @@
+package file;
+
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
+/**
+ * Created by Notebook-PC on 22/05/2017.
+ */
 public class Koneksi {
 
     public static Connection getConnection() {
