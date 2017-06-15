@@ -1,8 +1,12 @@
 package file;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 
 class drawpad extends JComponent{
     public Image image;
@@ -10,7 +14,7 @@ class drawpad extends JComponent{
     int currentX, currentY, oldX, oldY;
 
     public drawpad(){
-        setDoubleBuffered(false);
+        setDoubleBuffered(true);
         addMouseListener(new MouseAdapter(){
             public void mousePressed(MouseEvent e){
                 oldX = e.getX();
@@ -35,15 +39,25 @@ class drawpad extends JComponent{
             image = createImage(getSize().width, getSize().height);
             graphics2D = (Graphics2D)image.getGraphics();
             graphics2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            clear();
+            clearp();
         }
         g.drawImage(image, 0, 0, null);
     }
 
-    public void clear(){
+    public void clearp(){
         graphics2D.setPaint(Color.white);
         graphics2D.fillRect(0, 0, getSize().width, getSize().height);
         graphics2D.setPaint(Color.black);
         repaint();
+    }
+
+    public BufferedImage getBufferedImage() {
+        BufferedImage bufferedImage = new BufferedImage(image.getWidth(null), image.getHeight(null), BufferedImage.TYPE_INT_ARGB);
+
+        Graphics2D graphics2D = bufferedImage.createGraphics();
+        graphics2D.drawImage(image, 0, 0, null);
+        graphics2D.dispose();
+
+        return bufferedImage;
     }
 }

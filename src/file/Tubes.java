@@ -1,28 +1,33 @@
 package file;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 import java.sql.*;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class Tubes extends JFrame {
-    public JPanel panel, panelnew, panelawal, scroll, panellock;
+    public JPanel panel, panelnew, panelawal, scroll, panellock, panelload;
     public JTextArea areanew;
     public JTextField fieldjudul, fieldtanggal, fieldkategori, fieldlock;
-    public String Sjudul, Stanggal, Skategori, Spassword, Sisi;
+    public String Sjudul, Stanggal, Skategori, Spassword, Sisi, Sjenis;
     public JScrollPane listItem;
     public Date tanggal;
     public JLabel list, depan;
-    public BoxLayout boxLayout;//    public paint drawpad;
-//    public Blob pdraw;
+    public BoxLayout boxLayout;
     public ImageIcon logo, icon, locker, iconlock;
     public Image imagelogo, imagelock;
-    public JComboBox CBkategori;
+    public JComboBox CBkategori, CBjenis;
+    public drawpad paintPad, openPad;
     private JMenuBar menu;
     private JMenu fileMenu, Option, Changekat;
-    private JMenuItem close, New, save, home, lock, unlock, delete, blue, white, red, green, yellow;
+    private JMenuItem close, New, save, home, lock, unlock, delete, blue, white, red, green, yellow, clearp, saveImage, openImage;
+
 
     public Tubes() throws SQLException {
         super("Agenda");
@@ -49,6 +54,8 @@ public class Tubes extends JFrame {
         Option.setVisible(false);
         New = new JMenuItem("New");
         fileMenu.add(New);
+        openImage = new JMenuItem("Open Image");
+        fileMenu.add(openImage);
         home = new JMenuItem("home");
         fileMenu.add(home);
         close = new JMenuItem("Close");
@@ -59,7 +66,12 @@ public class Tubes extends JFrame {
         Option.add(lock);
         unlock = new JMenuItem("Unlock");
         delete = new JMenuItem("Delete");
+        clearp = new JMenuItem("Clear");
+        saveImage = new JMenuItem("Save Image");
+
         Option.add(delete);
+        Option.add(clearp);
+        Option.add(saveImage);
         Changekat = new JMenu("Change kategori");
         Option.add(Changekat);
         blue = new JMenuItem("Blue");
@@ -76,11 +88,9 @@ public class Tubes extends JFrame {
         CardLayout cards = new CardLayout();
         JPanel cardPanel = new JPanel();
 
-        //panel semua
         panel = new JPanel(new BorderLayout());
         panel.add(cardPanel, BorderLayout.CENTER);
 
-        //panelscroll
         listjudul();
 
         logo = new ImageIcon("logo.png");
@@ -89,35 +99,39 @@ public class Tubes extends JFrame {
 
         depan = new JLabel(icon);
 
-        //panel awal
         panelawal = new JPanel(new BorderLayout());
         panelawal.setBackground(Color.gray);
         panelawal.add(depan, BorderLayout.CENTER);
 
-        //panel new&lock
         panelnew = new JPanel(new GridBagLayout());
         panellock = new JPanel(new GridBagLayout());
+        panelload = new JPanel(new GridBagLayout());
 
         fieldjudul = new JTextField(30);
         fieldtanggal = new JTextField(30);
         fieldkategori = new JTextField(30);
+
         fieldlock = new JTextField(30);
         String kategori[] = {"Blue","Red","Yellow","Green","White"};
         CBkategori = new JComboBox(kategori);
 
+        String jenis[] = {"Text","Draw"};
+        CBjenis = new JComboBox(jenis);
+
         areanew = new JTextArea();
         areanew.setLineWrap(true);
         areanew.setSize(350,150);
-//
-//        drawpad = new paint();
-//        drawpad.setSize(350,150);
 
         cardPanel.setLayout(cards);
         cards.show(cardPanel, "CardLayout");
 
+        paintPad = new drawpad();
+        openPad = new drawpad();
+
         cardPanel.add(panelawal, "Card 1");
         cardPanel.add(areanew, "Card 2");
-//        cardPanel.add(drawpad, "Card 3");
+        cardPanel.add(paintPad, "Card 3");
+        cardPanel.add(openPad, "Card 4");
 
         getContentPane().add(panel);
 
@@ -140,6 +154,10 @@ public class Tubes extends JFrame {
                 JLabel kategori = new JLabel("Kategori : ");
                 panelnew.add(kategori,c);
 
+                c.gridy = 2;
+                JLabel jenis = new JLabel("Jenis : ");
+                panelnew.add(jenis,c);
+
                 c.gridx = 1;
                 c.gridy = 0;
                 c.anchor = GridBagConstraints.LINE_START;
@@ -149,21 +167,72 @@ public class Tubes extends JFrame {
                 c.gridy = 1;
                 panelnew.add(CBkategori,c);
 
+                c.gridy = 2;
+                panelnew.add(CBjenis,c);
+
                 int result = JOptionPane.showConfirmDialog(null, panelnew, "Agenda", JOptionPane.OK_CANCEL_OPTION);
 
                 if (result == JOptionPane.OK_OPTION) {
                     Sjudul = fieldjudul.getText();
                     Skategori = (String)CBkategori.getSelectedItem();
+                    Sjenis = (String)CBjenis.getSelectedItem();
 
                     panelawal.setVisible(false);
-//                    if(Skategori.equals("draw")){
-//                        drawpad.setVisible(true);
-//                        Option.add(Clear);
-//                    }
-//                    else{
-                                     areanew.setText("");
-                    areanew.setVisible(true);
+
+                    if(Sjenis.equals("Draw"))
+                    {
+                        paintPad.setVisible(true);
+                        Option.setVisible(true);
+                        save.setVisible(false);
+                    }
+                    else{
+                        areanew.setText("");
+                        areanew.setVisible(true);
+                        Option.setVisible(true);
+                        saveImage.setVisible(false);
+                    }
+                }
+            }
+        });
+
+        openImage.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                GridBagConstraints c = new GridBagConstraints();
+                c.weightx = 1;
+                c.weighty = 1;
+                c.gridwidth = 1;
+                c.gridheight = 1;
+
+                c.gridx = 0;
+                c.gridy = 0;
+                c.anchor = GridBagConstraints.LINE_END;
+                JLabel judul = new JLabel("Judul : ");
+                panelload.add(judul,c);
+
+                c.gridx = 1;
+                c.gridy = 0;
+                c.anchor = GridBagConstraints.LINE_START;
+                fieldjudul.setText("");
+                panelload.add(fieldjudul,c);
+
+                int result = JOptionPane.showConfirmDialog(null, panelload, "Load Image", JOptionPane.OK_CANCEL_OPTION);
+
+                if (result == JOptionPane.OK_OPTION) {
+                    Sjudul = fieldjudul.getText();
+
+                    panelawal.setVisible(false);
+                    areanew.setVisible(false);
+
+                    try {
+                        load();
+                    } catch (IOException e1) {
+                        e1.printStackTrace();
+                    }
+                    openPad.setVisible(true);
+
                     Option.setVisible(true);
+                    save.setVisible(false);
                 }
             }
         });
@@ -246,7 +315,6 @@ public class Tubes extends JFrame {
                     } catch (SQLException e1) {
                         e1.printStackTrace();
                     }
-
                 }
             }
         });
@@ -345,12 +413,26 @@ public class Tubes extends JFrame {
             }
         });
 
-//        Clear.addActionListener(new ActionListener() {
-//            @Override
-//            public void actionPerformed(ActionEvent e) {
-//                drawpad.clear();
-//            }
-//        });
+        saveImage.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                BufferedImage drawing = paintPad.getBufferedImage();
+
+                File outputFile = new File(Sjudul + ".png");
+                try {
+                    ImageIO.write(drawing, "png", outputFile);
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                }
+            }
+        });
+
+        clearp.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                paintPad.clearp();
+            }
+        });
 
         close.addActionListener(new ActionListener() {
             @Override
@@ -367,6 +449,11 @@ public class Tubes extends JFrame {
 
     public static void main(String[] args) throws SQLException {
         Tubes agenda = new Tubes();
+    }
+
+    public void load() throws IOException {
+        openPad.image = ImageIO.read(new File(Sjudul + ".png"));
+        repaint();
     }
 
     public void check() throws SQLException {
@@ -470,17 +557,6 @@ public class Tubes extends JFrame {
                         }
                     });
                     T.start();
-
-//                    int i=1;
-
-//                    while(isRunning)
-//                    {
-//                        System.out.println(i);
-//                        if(i==5)
-//                        {
-//                            isRunning=false;
-//                        }
-//                    }
                 }
             }
         }
